@@ -18,8 +18,8 @@ public class FareCalculatorService {
         if (durationMillis < 30 * 60 * 1000){
             ticket.setPrice(0);
         } else {
-
-            double duration = durationMillis / (60 * 60 * 1000);
+            double duration = durationMillis - (30 * 60 * 1000);
+            duration = duration / (60 * 60 * 1000);
 
             switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {
