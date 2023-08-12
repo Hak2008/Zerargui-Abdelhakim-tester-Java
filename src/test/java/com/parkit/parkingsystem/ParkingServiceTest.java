@@ -43,8 +43,6 @@ public class ParkingServiceTest {
             lenient().when(ticketDAO.getTicket(anyString())).thenReturn(ticket);
             lenient().when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(true);
 
-
-
             parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         } catch (Exception e) {
             e.printStackTrace();
@@ -60,9 +58,9 @@ public class ParkingServiceTest {
 
         parkingService.processExitingVehicle();
 
-        verify(parkingSpotDAO, Mockito.times(1)).updateParking(any(ParkingSpot.class));
-        verify(ticketDAO, Mockito.times(1)).updateTicket(any(Ticket.class));
-        verify(ticketDAO, Mockito.times(1)).getNbTicket(anyString());
+        verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
+        verify(ticketDAO, times(1)).updateTicket(any(Ticket.class));
+        verify(ticketDAO, times(1)).getNbTicket(anyString());
 
     }
 
@@ -73,15 +71,16 @@ public class ParkingServiceTest {
         when(ticketDAO.saveTicket(any(Ticket.class))).thenReturn(true);
         when(inputReaderUtil.readSelection()).thenReturn(1);
         when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
-
+        when(ticketDAO.getNbTicket(anyString())).thenReturn(1);
 
         parkingService.processIncomingVehicle();
-
 
         verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
         verify(ticketDAO, times(1)).saveTicket(any(Ticket.class));
         verify(parkingSpotDAO, times(1)).getNextAvailableSlot(any(ParkingType.class));
         verify(inputReaderUtil, times(1)).readSelection();
+        verify(ticketDAO, times(1)).getNbTicket(anyString());
+
     }
 
     @Test
@@ -94,6 +93,7 @@ public class ParkingServiceTest {
 
         verify(ticketDAO, Mockito.times(1)).updateTicket(any(Ticket.class));
         verify(ticketDAO, Mockito.times(1)).getNbTicket(anyString());
+
     }
 
     @Test
@@ -130,7 +130,6 @@ public class ParkingServiceTest {
 
         verify(inputReaderUtil, times(1)).readSelection();
     }
-
 }
 
 
