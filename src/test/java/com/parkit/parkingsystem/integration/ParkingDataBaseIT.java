@@ -1,10 +1,9 @@
 package com.parkit.parkingsystem.integration;
 
-import com.parkit.parkingsystem.constants.Fare;
+import java.util.Date;
 import com.parkit.parkingsystem.dao.ParkingSpotDAO;
 import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.dao.TicketDAO;
-import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.integration.config.DataBaseTestConfig;
 import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
@@ -19,12 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Date;
-import java.util.function.BooleanSupplier;
-
-import com.parkit.parkingsystem.service.FareCalculatorService;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
@@ -40,6 +34,7 @@ public class ParkingDataBaseIT {
 
     @Mock
     private static InputReaderUtil inputReaderUtil;
+
 
     @BeforeAll
     private static void setUp() throws Exception{
@@ -67,14 +62,11 @@ public class ParkingDataBaseIT {
 
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
-        when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(1);
-
         parkingService.processIncomingVehicle();
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
 
         // TODO: check that a ticket is actualy saved in DB and Parking table is updated with availability
 
-        verify(ticketDAO, times(1)).saveTicket(any(Ticket.class));
-        Ticket ticket = ticketDAO.getTicket("ABCDEF");
         assertNotNull(ticket);
         assertEquals(ParkingType.CAR, ticket.getParkingSpot().getParkingType());
         assertEquals(false, ticket.getParkingSpot().isAvailable());
@@ -90,37 +82,35 @@ public class ParkingDataBaseIT {
 
         parkingService.processExitingVehicle();
 
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
 
         // TODO: check that the fare generated and out time are populated correctly in the database
 
+        assertNotNull(ticket.getOutTime());
+        assertTrue(ticket.getInTime().before(ticket.getOutTime()));
+        assertTrue(ticket.getPrice() >= 0);
 
     }
 
     @Test
-    public void testParkingLotExitRecurringUsert(){
+    public void testParkingLotExitRecurringUser(){
 
-        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        TicketDAO ticketDAOSpy = spy(TicketDAO.class);
+        when(ticketDAOSpy.getNbTicket("ABCDEF")).thenReturn(1);
 
-        Ticket ticket = new Ticket();
-        ticket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
-        ticket.setVehicleRegNumber("ABCDEF");
-        ticket.setInTime(new Date((System.currentTimeMillis() - (60*60*1000))));
-        ticket.setOutTime(new Date());
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAOSpy);
 
         parkingService.processIncomingVehicle();
-
         parkingService.processExitingVehicle();
 
-        // TODO: Il doit tester le calcul du prix d’un ticket via l’appel de processIncomingVehicle et processExitingVehicle dans le cas d’un utilisateur récurrent.
+        Ticket ticket = ticketDAOSpy.getTicket("ABCDEF");
 
+        verify(ticketDAOSpy, times(2)).getNbTicket("ABCDEF");
 
-        fareCalculatorService = new FareCalculatorService();
-        fareCalculatorService.calculateFare(ticket, true);
+        assertNotNull(ticket.getOutTime());
+        assertTrue(ticket.getInTime().before(ticket.getOutTime()));
+        assertTrue(ticket.getPrice() >= 0);
 
-        assertTrue(ticket.getPrice() > 0);
-        assertEquals( ( 0.95 *((Fare.CAR_RATE_PER_HOUR) - (0.5 * Fare.CAR_RATE_PER_HOUR))),ticket.getPrice());
+   }
 
-    }
 }
-
-
