@@ -95,14 +95,14 @@ public class TicketDAO {
             PreparedStatement ps = con.prepareStatement(DBConstants.GET_NB_TICKET);
             ps.setString(1, vehicleRegNumber);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
+            if(rs.next()){
                 nbTickets = rs.getInt(1);
             }
             dataBaseConfig.closeResultSet(rs);
             dataBaseConfig.closePreparedStatement(ps);
-        } catch (Exception ex) {
+        }catch (Exception ex){
             logger.error("Error getting number of tickets", ex);
-        } finally {
+        }finally {
             dataBaseConfig.closeConnection(con);
         }
         return nbTickets;
